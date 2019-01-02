@@ -39,14 +39,13 @@ public class OfficeFilePreviewImpl implements FilePreview {
         FileAttribute fileAttribute=fileUtils.getFileAttribute(url);
         String suffix=fileAttribute.getSuffix();
         String fileName=fileAttribute.getName();
-        String decodedUrl=fileAttribute.getDecodedUrl();
         boolean isHtml = suffix.equalsIgnoreCase("xls") || suffix.equalsIgnoreCase("xlsx");
         String pdfName = fileName.substring(0, fileName.lastIndexOf(".") + 1) + (isHtml ? "html" : "pdf");
         // 判断之前是否已转换过，如果转换过，直接返回，否则执行转换
         if (!fileUtils.listConvertedFiles().containsKey(pdfName)) {
             String filePath = fileDir + fileName;
             if (!new File(filePath).exists()) {
-                ReturnResponse<String> response = downloadUtils.downLoad(decodedUrl, suffix, null);
+                ReturnResponse<String> response = downloadUtils.downLoad(url, suffix, null);
                 if (0 != response.getCode()) {
                     model.addAttribute("msg", response.getMsg());
                     return "fileNotSupported";

@@ -20,8 +20,11 @@ public class ChinesePathFilter implements Filter {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         StringBuilder pathBuilder = new StringBuilder();
-        pathBuilder.append(request.getScheme()).append("://").append(request.getServerName()).append(":")
-                .append(request.getServerPort()).append(((HttpServletRequest)request).getContextPath()).append("/");
+        pathBuilder.append(request.getScheme()).append("s://").append(request.getServerName());
+        if (80 != request.getServerPort() && 443 != request.getServerPort()) {
+            pathBuilder.append(":").append(request.getServerPort());
+        }
+        pathBuilder.append(((HttpServletRequest)request).getContextPath()).append("/");
         request.setAttribute("baseUrl", pathBuilder.toString());
         chain.doFilter(request, response);
     }

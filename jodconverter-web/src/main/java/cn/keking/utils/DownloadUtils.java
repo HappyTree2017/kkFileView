@@ -1,6 +1,8 @@
 package cn.keking.utils;
 
 import cn.keking.model.ReturnResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.io.*;
@@ -12,6 +14,8 @@ import java.util.UUID;
  */
 @Component
 public class DownloadUtils {
+
+    Logger logger = LoggerFactory.getLogger(getClass());
 
     @Value("${file.dir}")
     String fileDir;
@@ -30,10 +34,12 @@ public class DownloadUtils {
         ReturnResponse<String> response = new ReturnResponse<>(0, "下载成功!!!", "");
         URL url = null;
         try {
-            urlAddress = replacePlusMark(urlAddress);
+            logger.info("框架解码后url：{}", urlAddress);
+//            urlAddress = replacePlusMark(urlAddress);
             urlAddress = encodeUrlParam(urlAddress);
             // 因为tomcat不能处理'+'号，所以讲'+'号替换成'%20%'
-            urlAddress = urlAddress.replaceAll("\\+", "%20");
+//            urlAddress = urlAddress.replaceAll("\\+", "%20");
+            logger.info("重新编码后url：{}", urlAddress);
             url = new URL(urlAddress);
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -102,11 +108,18 @@ public class DownloadUtils {
 
     /**
      * 对最有一个路径进行转码
+     *      因为有一些地址的文件名可能会有中文，但是中文直接网络传输服务端不能正确解析，
+     *      所以要先编码pathInfo部分的文件名，但是测试看来有些文件名已经被编码了(亦即文件
+     *      命中包含%-【所以这里需要使用该预览工具的客户规范文件名，不要包含%等特殊字符，
+     *      不然会不能编码，导致下载不到文件】)而有些没有编码，所以现在处理方式是把不包含
+     *      %的文件进行编码，对于参数部门也是同理，因为有些签名中的特殊字符已经被编码了，
+     *      而有些没有，所以也要做相同的处理
      * @param urlAddress
      *          http://192.168.2.111:8013/demo/Handle中文.zip
      * @return
      */
     private String encodeUrlParam(String urlAddress) {
+
         String newUrl = "";
         try {
             String path = "";
@@ -119,10 +132,14 @@ public class DownloadUtils {
             }
             String lastPath = path.substring(path.lastIndexOf("/") + 1);
             String leftPath = path.substring(0, path.lastIndexOf("/") + 1);
-            String encodeLastPath = URLEncoder.encode(lastPath, "UTF-8");
+            String encodeLastPath = lastPath.contains("%") ? lastPath : URLEncoder.encode(lastPath, "UTF-8");
             newUrl += leftPath + encodeLastPath;
             if (urlAddress.contains("?")) {
-                newUrl += param;
+                String encodeParam = param;
+                if (!param.contains("%")) {
+                    encodeParam = URLEncoder.encode(param, "UTF-8");
+                }
+                newUrl += encodeParam;
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();

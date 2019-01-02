@@ -31,12 +31,11 @@ public class CompressFilePreviewImpl implements FilePreview{
     public String filePreviewHandle(String url, Model model) {
         FileAttribute fileAttribute=fileUtils.getFileAttribute(url);
         String fileName=fileAttribute.getName();
-        String decodedUrl=fileAttribute.getDecodedUrl();
         String suffix=fileAttribute.getSuffix();
         String fileTree = null;
         // 判断文件名是否存在(redis缓存读取)
         if (!StringUtils.hasText(fileUtils.getConvertedFile(fileName))) {
-            ReturnResponse<String> response = downloadUtils.downLoad(decodedUrl, suffix, fileName);
+            ReturnResponse<String> response = downloadUtils.downLoad(url, suffix, fileName);
             if (0 != response.getCode()) {
                 model.addAttribute("msg", response.getMsg());
                 return "fileNotSupported";
